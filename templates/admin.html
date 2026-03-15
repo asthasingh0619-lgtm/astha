@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Push Notification Admin</title>
+    <style>
+        body{
+            font-family:Segoe UI,Arial;
+            background:linear-gradient(135deg,#e3f2ff,#f5f9ff);
+            margin:0;
+            padding:30px;
+        }
+        .container{
+            max-width:900px;
+            margin:auto;
+        }
+        .card{
+            background:white;
+            padding:25px;
+            border-radius:12px;
+            box-shadow:0 10px 25px rgba(0,0,0,0.1);
+            margin-bottom:25px;
+        }
+        h1{
+            text-align:center;
+            color:#1a73e8;
+            margin-bottom:30px;
+        }
+        h2{
+            margin-top:0;
+            color:#333;
+        }
+        label{
+            font-weight:600;
+            margin-top:12px;
+            display:block;
+        }
+        input,textarea,select{
+            width:100%;
+            padding:8px;
+            margin-top:4px;
+            border-radius:6px;
+            border:1px solid #ccc;
+            font-size:14px;
+        }
+        textarea{
+            min-height:70px;
+        }
+        .row{
+            display:grid;
+            grid-template-columns:repeat(5,1fr);
+            gap:8px;
+        }
+        button{
+            background:#1a73e8;
+            border:none;
+            color:white;
+            padding:9px 14px;
+            border-radius:6px;
+            cursor:pointer;
+            font-size:14px;
+        }
+        button:hover{
+            background:#0d5bd1;
+        }
+        .secondary{
+            background:#666;
+        }
+        .secondary:hover{
+            background:#444;
+        }
+        #result{
+            margin-top:10px;
+            font-weight:600;
+            color:green;
+        }
+        .notification{
+            background:#f6f9ff;
+            padding:12px;
+            border-radius:8px;
+            margin-top:10px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+        .notification.pending{
+            border-left: 4px solid orange;
+        }
+        .notification:hover{
+            background:#eef4ff;
+        }
+        .title{
+            font-weight:700;
+            color:#1a73e8;
+        }
+        .time{
+            font-size:12px;
+            color:#666;
+        }
+        .actions button{
+            margin-left:6px;
+            padding:6px 10px;
+            font-size:12px;
+        }
+        .searchBar{
+            display:flex;
+            gap:10px;
+            margin-bottom:10px;
+        }
+        .emoji-btn{
+            width:35px;
+            font-size:18px;
+            padding:0;
+            cursor:pointer;
+        }
+        .emoji-picker{
+            position:absolute;
+            top:100%;
+            left:auto;
+            right:0;
+            background:white;
+            border:1px solid #ccc;
+            padding:5px;
+            display:none;
+            flex-wrap:wrap;
+            width:220px;
+            max-height:200px;
+            overflow-y:auto;
+            z-index:999;
+            border-radius:6px;
+            box-shadow:0 5px 15px rgba(0,0,0,0.2);
+        }
+        .emoji-picker span{
+            font-size:20px;
+            padding:5px;
+            cursor:pointer;
+        }
+        .emoji-container{
+            position:relative;
+            display:flex;
+            align-items:center;
+            gap:5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Push Notification Admin</h1>
+
+    <!-- Send Notification -->
+    <div class="card">
+        <h2>Send Notification</h2>
+        <form id="notifyForm">
+            <label>Title</label>
+            <div class="emoji-container">
+                <input name="title" required>
+                <button type="button" class="emoji-btn" data-target="title">😀</button>
+                <div class="emoji-picker" id="picker-title"></div>
+            </div>
+
+            <label>Message</label>
+            <div class="emoji-container">
+                <textarea name="message" required></textarea>
+                <button type="button" class="emoji-btn" data-target="message">😀</button>
+                <div class="emoji-picker" id="picker-message"></div>
+            </div>
+
+            <label>URL (optional)</label>
+            <input name="url">
+
+            <label>Schedule (optional)</label>
+            <div class="row">
+                <select id="year"><option value="">Year</option></select>
+                <select id="month"><option value="">Month</option></select>
+                <select id="day"><option value="">Day</option></select>
+                <select id="hour"><option value="">Hour</option></select>
+                <select id="minute"><option value="">Minute</option></select>
+            </div>
+            <button type="submit">Send Notification</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <!-- Scheduled Notifications -->
+    <div class="card">
+        <h2>Scheduled Notifications</h2>
+        <div class="searchBar">
+            <input type="month" id="searchMonth">
+            <button onclick="searchByMonth()">Search</button>
+            <button class="secondary" onclick="loadNotifications()">Reset</button>
+        </div>
+        <div id="notifList"></div>
+    </div>
+</div>
+
+<script>
+const year=document.getElementById("year");
+const month=document.getElementById("month");
+const day=document.getElementById("day");
+const hour=document.getElementById("hour");
+const minute=document.getElementById("minute");
+const now=new Date();
+for(let y=now.getFullYear();y<=now.getFullYear()+2;y++) year.innerHTML+=`<option value="${y}">${y}</option>`;
+for(let i=1;i<=12;i++) month.innerHTML+=`<option value="${i}">${i}</option>`;
+for(let i=1;i<=31;i++) day.innerHTML+=`<option value="${i}">${i}</option>`;
+for(let i=0;i<24;i++) hour.innerHTML+=`<option value="${i}">${i}</option>`;
+for(let i=0;i<60;i++) minute.innerHTML+=`<option value="${i}">${i}</option>`;
+
+let editingId=null;
+const emojis=["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😍","😎","🤩","😢","😭","😡","👍","👎","🙏","💖","🔥","🎉","🎁","🎶","🚀"];
+
+function createEmojiPicker(pickerId,input){
+    const picker=document.getElementById(pickerId);
+    picker.innerHTML="";
+    emojis.forEach(e=>{
+        const span=document.createElement("span");
+        span.textContent=e;
+        span.addEventListener("click",()=>{
+            const start=input.selectionStart;
+            const end=input.selectionEnd;
+            input.value=input.value.substring(0,start)+e+input.value.substring(end);
+            input.selectionStart=input.selectionEnd=start+e.length;
+            input.focus();
+        });
+        picker.appendChild(span);
+    });
+}
+
+document.querySelectorAll(".emoji-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+        const target=btn.dataset.target;
+        const picker=document.getElementById(`picker-${target}`);
+        picker.style.display=picker.style.display==="flex"?"none":"flex";
+        picker.style.flexWrap="wrap";
+        const input=document.querySelector(`[name=${target}]`);
+        createEmojiPicker(`picker-${target}`,input);
+    });
+});
+
+document.addEventListener("click", e=>{
+    if(!e.target.classList.contains("emoji-btn") && !e.target.closest(".emoji-picker")){
+        document.querySelectorAll(".emoji-picker").forEach(p=>p.style.display="none");
+    }
+});
+
+document.getElementById("notifyForm").addEventListener("submit", async e=>{
+    e.preventDefault();
+    const formData=new FormData(e.target);
+    const y=year.value, m=month.value, d=day.value, h=hour.value, mi=minute.value;
+    if(y && m && d && h && mi){
+        const date=new Date(y,m-1,d,h,mi);
+        formData.append("send_at",date.toISOString());
+    }
+    let url="/send-notification", method="POST";
+    if(editingId){ url="/notifications/"+editingId; method="PUT"; }
+    const res=await fetch(url,{method,body:formData});
+    const data=await res.json();
+    document.getElementById("result").innerText=data.status || "Updated";
+    editingId=null;
+    document.getElementById("notifyForm").reset();
+    loadNotifications();
+});
+
+async function loadNotifications(){
+    const res=await fetch("/notifications");
+    const data=await res.json();
+    renderList(data);
+}
+
+function renderList(data){
+    const list=document.getElementById("notifList");
+    list.innerHTML="";
+    data.forEach(n=>{
+        const div=document.createElement("div");
+        const pendingClass=n.sent?"":"pending";
+        div.className="notification "+pendingClass;
+        div.innerHTML=`
+            <div>
+                <div class="title">${n.title}</div>
+                <div>${n.message}</div>
+                <div class="time">${n.time} ${n.sent?"(Sent)":"(Pending)"}</div>
+            </div>
+            <div class="actions">
+                <button onclick='editNotif("${n.id}", ${JSON.stringify(n.title)}, ${JSON.stringify(n.message)}, "${n.send_at}")'>Edit</button>
+                <button onclick="deleteNotif('${n.id}')">Delete</button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function editNotif(id,title,message,send_at){
+    editingId=id;
+    document.querySelector("input[name='title']").value=title;
+    document.querySelector("textarea[name='message']").value=message;
+    const dt=new Date(send_at);
+    year.value=dt.getFullYear();
+    month.value=dt.getMonth()+1;
+    day.value=dt.getDate();
+    hour.value=dt.getHours();
+    minute.value=dt.getMinutes();
+    document.getElementById("result").innerText="Edit mode enabled. Update and click Send.";
+    window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function deleteNotif(id){
+    await fetch("/notifications/"+id,{method:"DELETE"});
+    loadNotifications();
+}
+
+async function searchByMonth(){
+    const value=document.getElementById("searchMonth").value;
+    if(!value){ loadNotifications(); return; }
+    const res=await fetch("/notifications");
+    const data=await res.json();
+    const filtered=data.filter(n=>n.time.startsWith(value));
+    renderList(filtered);
+}
+
+setInterval(loadNotifications,10000);
+loadNotifications();
+</script>
+</body>
+</html>
