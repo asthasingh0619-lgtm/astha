@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pywebpush
+jinja2
+apscheduler==3.10.4
+pytz
+sqlalchemy
+python-multipart
