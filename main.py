@@ -32,8 +32,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
-VAPID_PUBLIC_KEY = "BDKhTIxI05AlXXk_zbJxESluEqbGXe25m6k5BuIXHWHQhS4Eh58JajT7IGdR1jwa9bjPZLD_LxM58vrNIiHEaS8"
-VAPID_PRIVATE_KEY = "nBBu_wCGpRaX_RZ0Te0RrygMUNQT5AhuQ25MnHP10_I"
+VAPID_PUBLIC_KEY = "BO7gS4ATr2UhtE_7Vm4yUrQpf_VfK2as7LxYMTR_wz4QK9S62ERbAc8EIrPiXgocPUd8C8Ur0Hbaa-KWmIeWj4I"
+VAPID_PRIVATE_KEY = "IgAuhcRAh6nZM6y_dVvmU0Clz-YT1TEUljHQcN-TfIM"
 
 # -----------------------
 # Database setup
