@@ -94,7 +94,14 @@ def send_notification_task(title, message, url=None, job_id=None):
     absolute_url = url if url else host
     icon_url = f"{host}/static/ima1.png"
 
+    success_count = 0
+
     for sub in subs:
+        endpoint = sub.get("endpoint")
+        if not endpoint:
+            dead_subs.append(endpoint)
+            continue
+
         try:
             payload = json.dumps({
                 "title": title,
@@ -102,22 +109,37 @@ def send_notification_task(title, message, url=None, job_id=None):
                 "url": absolute_url,
                 "icon": icon_url
             })
-            endpoint = sub["endpoint"]
-            aud = endpoint.split("/")[2]
+
+            # Safe aud extraction
+            parts = endpoint.split("/")
+            aud = parts[2] if len(parts) > 2 else ""
+
             webpush(
                 subscription_info=sub,
                 data=payload,
                 vapid_private_key=VAPID_PRIVATE_KEY,
                 vapid_claims={"sub": "mailto:test@test.com", "aud": f"https://{aud}"}
             )
+            success_count += 1
+
         except WebPushException as ex:
             print("Push failed:", ex)
             if ex.response and ex.response.status_code == 410:
-                dead_subs.append(sub["endpoint"])
+                # Expired/unsubscribed, mark for removal
+                dead_subs.append(endpoint)
+            else:
+                print("Push error (ignored):", ex)
 
+        except Exception as ex:
+            print("Unexpected error sending push:", ex)
+
+    # Remove dead subscriptions from DB
     for ep in dead_subs:
-        cursor.execute("DELETE FROM subscribers WHERE endpoint=?", (ep,))
+        if ep:
+            cursor.execute("DELETE FROM subscribers WHERE endpoint=?", (ep,))
     conn.commit()
+
+    print(f"✅ Notification task completed. Sent to {success_count} subscribers, removed {len(dead_subs)} expired.")
 
 # -----------------------
 # Admin page
