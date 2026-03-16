@@ -90,7 +90,8 @@ def send_notification_task(title, message, url=None, job_id=None):
     subs = get_subscribers()
     dead_subs = []
 
-    host = os.environ.get("HOST", "http://localhost:8000")
+    # Use public Render URL
+    host = os.environ.get("HOST", "https://astha-2.onrender.com")
     absolute_url = url if url else host
     icon_url = f"{host}/static/ima1.png"
 
@@ -107,7 +108,7 @@ def send_notification_task(title, message, url=None, job_id=None):
                 "title": title,
                 "body": message,
                 "url": absolute_url,
-                "icon": icon_url
+                "icon": icon_url  # Public icon URL
             })
 
             # Safe aud extraction
@@ -125,7 +126,6 @@ def send_notification_task(title, message, url=None, job_id=None):
         except WebPushException as ex:
             print("Push failed:", ex)
             if ex.response and ex.response.status_code == 410:
-                # Expired/unsubscribed, mark for removal
                 dead_subs.append(endpoint)
             else:
                 print("Push error (ignored):", ex)
