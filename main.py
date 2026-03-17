@@ -91,8 +91,8 @@ def send_notification_task(title, message, url=None, job_id=None):
     dead_subs = []
 
     # Use public Render URL
-    host = os.environ.get("HOST", "https://astha-3.onrender.com")
-    absolute_url = url if url else host
+host = "https://raw.githubusercontent.com/asthasingh0619-lgtm/astha/main/static/img1.png"
+absolute_url = url if url else host
     icon_url = f"{host}/static/ima1.png"
 
     success_count = 0
